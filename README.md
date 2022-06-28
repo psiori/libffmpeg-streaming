@@ -21,6 +21,16 @@ Beware that **an even-numbered RTP port** is necessary otherwise VLC will not re
 packets. This is because the live555 library VLC used discards the last bit of the port
 number, so the port gets changed when odd (wtf).
 
+## SDP files
+
+In order to render the received streams (assuming the respective ```VideoStream``` monitor was configured in the ```autocrane-core``` configuration), the binary ```decode_rtp``` has to be started with a matching sdp file as an argument, e.g.:
+
+```bash
+./decode_rtp sdp-files/palatka/cabin_palatka.sdp
+```
+However, keep in mind to update the IP address of the receiver within the `.sdp` files.
+
+
 
 # Streaming to VLC
 
