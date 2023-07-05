@@ -47,13 +47,13 @@ set(THIRD_PARTY_INCLUDE_DIRS ${BOOST_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${cppz
   message(STATUS "stream THIRD_PARTY_INCLUDE_DIRS: ${THIRD_PARTY_INCLUDE_DIRS}")
 set(THIRD_PARTY_LIBRARIES ${Boost_LIBRARIES} ${OpenCV_LIBRARIES} ${cppzmq_LIBRARIES}
     ${FFMPEG_LIBRARIES} ${Spinnaker_LIBRARIES} ${CMAKE_DL_LIBS})
-set(COMMON_SRC ${CMAKE_CURRENT_LIST_DIR}/avutils.cpp)
-set(ENCODER_SRC ${CMAKE_CURRENT_LIST_DIR}/encode_video_fromdir.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/avtransmitter.cpp ${COMMON_SRC})
-set(DECODER_SRC ${CMAKE_CURRENT_LIST_DIR}/decode_video_zmq.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/avreceiver.cpp)
-set(ZMQ_ENCODER_SRC ${CMAKE_CURRENT_LIST_DIR}/encode_from_zmq.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/avtransmitter.cpp ${COMMON_SRC})
+set(COMMON_SRC ${CMAKE_CURRENT_LIST_DIR}/src/avutils.cpp)
+set(ENCODER_SRC ${CMAKE_CURRENT_LIST_DIR}/src/encode_video_fromdir.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/avtransmitter.cpp ${COMMON_SRC})
+set(DECODER_SRC ${CMAKE_CURRENT_LIST_DIR}/src/decode_video_zmq.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/avreceiver.cpp)
+set(ZMQ_ENCODER_SRC ${CMAKE_CURRENT_LIST_DIR}/src/encode_from_zmq.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/avtransmitter.cpp ${COMMON_SRC})
 add_executable(encode_video_fromdir)
 target_sources(encode_video_fromdir PRIVATE ${ENCODER_SRC} ${COMMON_SRC})
 target_include_directories(encode_video_fromdir PRIVATE ${LOCAL_INCLUDE_DIRS})
@@ -75,8 +75,8 @@ target_link_libraries(decode_video_zmq ${THIRD_PARTY_LIBRARIES})
 if(${SPINNAKER_FOUND})
     add_executable(encode_spinnaker)
     target_sources(encode_spinnaker PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/encode_spinnaker.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/avtransmitter.cpp ${COMMON_SRC})
+        ${CMAKE_CURRENT_LIST_DIR}/src/encode_spinnaker.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/avtransmitter.cpp ${COMMON_SRC})
     target_include_directories(encode_spinnaker PRIVATE ${LOCAL_INCLUDE_DIRS}
         ${THIRD_PARTY_INCLUDE_DIRS})
     target_link_libraries(encode_spinnaker ${THIRD_PARTY_LIBRARIES})
@@ -84,7 +84,7 @@ endif()
 
 add_executable(decode_rtp)
 target_sources(decode_rtp PRIVATE
-    decode_rtp.cpp ${COMMON_SRC})
+${CMAKE_CURRENT_LIST_DIR}/src/decode_rtp.cpp ${COMMON_SRC})
 target_link_libraries(decode_rtp ${THIRD_PARTY_LIBRARIES})
 target_include_directories(decode_rtp PRIVATE ${LOCAL_INCLUDE_DIRS} ${THIRD_PARTY_INCLUDE_DIRS})
 
@@ -93,20 +93,20 @@ target_include_directories(decode_rtp PRIVATE ${LOCAL_INCLUDE_DIRS} ${THIRD_PART
 # # ##############################################################################
 
 LIST(APPEND STREAM_SRCS
-  ${CMAKE_CURRENT_LIST_DIR}/avtransmitter.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/avreceiver.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/avutils.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/decode_rtp.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/decode_video_zmq.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/encode_spinnaker.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/encode_from_zmq.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/encode_video_fromdir.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/avtransmitter.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/avreceiver.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/avutils.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/decode_rtp.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/decode_video_zmq.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/encode_spinnaker.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/encode_from_zmq.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/encode_video_fromdir.cpp
 )
 
 LIST(APPEND STREAM_HEADERS
-${CMAKE_CURRENT_LIST_DIR}/avtransmitter.hpp
-${CMAKE_CURRENT_LIST_DIR}/avreceiver.hpp
-${CMAKE_CURRENT_LIST_DIR}/avutils.hpp
+${CMAKE_CURRENT_LIST_DIR}/src/avtransmitter.hpp
+${CMAKE_CURRENT_LIST_DIR}/src/avreceiver.hpp
+${CMAKE_CURRENT_LIST_DIR}/src/avutils.hpp
 )
 
 LIST(APPEND FILES
@@ -137,8 +137,8 @@ target_include_directories(${libavstream_LIBRARY} PRIVATE ${LOCAL_INCLUDE_DIRS})
 target_include_directories(${libavstream_LIBRARY} SYSTEM PRIVATE ${THIRD_PARTY_INCLUDE_DIRS})
 target_link_libraries(${libavstream_LIBRARY} PUBLIC ${THIRD_PARTY_LIBRARIES})
 target_sources(${libavstream_LIBRARY} PRIVATE
-  ${${libavstream_LIBRARY}_DIR}/avutils.cpp
-  ${${libavstream_LIBRARY}_DIR}/avtransmitter.cpp)
+  ${${libavstream_LIBRARY}_DIR}/src/avutils.cpp
+  ${${libavstream_LIBRARY}_DIR}/src/avtransmitter.cpp)
 
 # ##############################################################################
 # INSTALL
