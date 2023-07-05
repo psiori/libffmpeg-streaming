@@ -47,7 +47,7 @@ set(THIRD_PARTY_INCLUDE_DIRS ${BOOST_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${cppz
   message(STATUS "stream THIRD_PARTY_INCLUDE_DIRS: ${THIRD_PARTY_INCLUDE_DIRS}")
 set(THIRD_PARTY_LIBRARIES ${Boost_LIBRARIES} ${OpenCV_LIBRARIES} ${cppzmq_LIBRARIES}
     ${FFMPEG_LIBRARIES} ${Spinnaker_LIBRARIES} ${CMAKE_DL_LIBS})
-set(COMMON_SRC ${CMAKE_CURRENT_LIST_DIR}/src/avutils.cpp)
+set(COMMON_SRC ${CMAKE_CURRENT_LIST_DIR}/src/avutils.cpp ${CMAKE_CURRENT_LIST_DIR}/src/time_functions.cpp)
 set(ENCODER_SRC ${CMAKE_CURRENT_LIST_DIR}/src/encode_video_fromdir.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/avtransmitter.cpp ${COMMON_SRC})
 set(DECODER_SRC ${CMAKE_CURRENT_LIST_DIR}/src/decode_video_zmq.cpp
@@ -82,9 +82,14 @@ if(${SPINNAKER_FOUND})
     target_link_libraries(encode_spinnaker ${THIRD_PARTY_LIBRARIES})
 endif()
 
-add_executable(decode_rtp)
-target_sources(decode_rtp PRIVATE
-${CMAKE_CURRENT_LIST_DIR}/src/decode_rtp.cpp ${COMMON_SRC})
+set(DECODE_RTP_SRCS
+  ${COMMON_SRC}
+  ${CMAKE_CURRENT_LIST_DIR}/src/decode_rtp.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/rtp_receiver.hpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/rtp_receiver.cpp
+)
+
+add_executable(decode_rtp ${DECODE_RTP_SRCS})
 target_link_libraries(decode_rtp ${THIRD_PARTY_LIBRARIES})
 target_include_directories(decode_rtp PRIVATE ${LOCAL_INCLUDE_DIRS} ${THIRD_PARTY_INCLUDE_DIRS})
 
@@ -96,6 +101,7 @@ LIST(APPEND STREAM_SRCS
   ${CMAKE_CURRENT_LIST_DIR}/src/avtransmitter.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/avreceiver.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/avutils.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/time_functions.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/decode_rtp.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/decode_video_zmq.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/encode_spinnaker.cpp
@@ -107,6 +113,7 @@ LIST(APPEND STREAM_HEADERS
 ${CMAKE_CURRENT_LIST_DIR}/src/avtransmitter.hpp
 ${CMAKE_CURRENT_LIST_DIR}/src/avreceiver.hpp
 ${CMAKE_CURRENT_LIST_DIR}/src/avutils.hpp
+${CMAKE_CURRENT_LIST_DIR}/src/time_functions.hpp
 )
 
 LIST(APPEND FILES
