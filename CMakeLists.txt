@@ -122,33 +122,35 @@ target_include_directories(decode_rtp PRIVATE ${LOCAL_INCLUDE_DIRS} ${THIRD_PART
 
 if(WITH_QT_APP AND OSX)
   message(STATUS "Building decode_rtp Qt based application")
-  set(DECODE_RTP_QT_APP_SRCS
+  set(DECODE_RTP_QT_SRCS
     ${COMMON_SRC}
     ${CMAKE_CURRENT_LIST_DIR}/src/rtp_receiver.hpp
     ${CMAKE_CURRENT_LIST_DIR}/src/rtp_receiver.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/decode_rtp_qt_app.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/qt_app/window.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/qt_app/window.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/decode_rtp_qt.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/image_updating_app.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/image_updating_app.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/video_thread.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/video_thread.cpp
   )
 
-  set(DECODE_RTP_QT_APP_THIRD_PARTY_LIBRARIES
+  set(DECODE_RTP_QT_THIRD_PARTY_LIBRARIES
     ${THIRD_PARTY_LIBRARIES}
     Qt5::Core
     Qt5::Gui
     Qt5::Widgets
   )
 
-  set(DECODE_RTP_QT_APP_THIRD_PARTY_INCLUDE_DIRS 
+  set(DECODE_RTP_QT_THIRD_PARTY_INCLUDE_DIRS 
     ${LOCAL_INCLUDE_DIRS}
     ${Qt5Core_INCLUDE_DIRS}
     ${THIRD_PARTY_INCLUDE_DIRS}
   )
 
-  add_executable(decode_rtp_qt_app ${DECODE_RTP_QT_APP_SRCS})
-  set_property(TARGET decode_rtp_qt_app PROPERTY AUTOMOC ON)
-  set_property(TARGET decode_rtp_qt_app PROPERTY AUTOUIC ON)
-  target_link_libraries(decode_rtp_qt_app ${DECODE_RTP_QT_APP_THIRD_PARTY_LIBRARIES})
-  target_include_directories(decode_rtp_qt_app PRIVATE ${DECODE_RTP_QT_APP_THIRD_PARTY_INCLUDE_DIRS})
+  add_executable(decode_rtp_qt ${DECODE_RTP_QT_SRCS})
+  set_property(TARGET decode_rtp_qt PROPERTY AUTOMOC ON)
+  set_property(TARGET decode_rtp_qt PROPERTY AUTOUIC ON)
+  target_link_libraries(decode_rtp_qt ${DECODE_RTP_QT_THIRD_PARTY_LIBRARIES})
+  target_include_directories(decode_rtp_qt PRIVATE ${DECODE_RTP_QT_THIRD_PARTY_INCLUDE_DIRS})
 endif()
 
 # # ##############################################################################
