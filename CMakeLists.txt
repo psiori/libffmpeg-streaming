@@ -36,12 +36,39 @@ if(WITH_SPINNAKER)
     find_package(Spinnaker 1.24.0.60)
 endif()
 
+# if the decoded images are displayed using Qt app instead of opencv `cv::imshow()`.
+# atm we do this only for macos
+if(WITH_QT_APP AND OSX)
+  message(STATUS "decode_rtp Qt based application enabled")
+  execute_process(
+    COMMAND brew --prefix qt@5
+    ERROR_QUIET
+    OUTPUT_VARIABLE QT_PREFIX
+    RESULT_VARIABLE find-qt-status
+  )
+  if(find-qt-status EQUAL 0)
+    set(QT_PREFIX ${QT_PREFIX}/lib/cmake/Qt5/)
+    string(REPLACE "\n" "" QT_PREFIX ${QT_PREFIX})
+  else()
+    message(
+      FATAL_ERROR
+        "Could not find Qt5 cmake config dir. Status was ${find-qt-status}"
+    )
+  endif()
+  find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED HINTS ${QT_PREFIX})
+  if(NOT Qt5_FOUND)
+    message(FATAL_ERROR "Qt5 not found")
+  else()
+    message(STATUS "Qt5_INCLUDE_DIRS: ${Qt5Gui_INCLUDE_DIRS}")
+  endif()
+endif()
+
 find_package(cppzmq REQUIRED)
 
 find_package(tclap REQUIRED)
 
 set(cppzmq_LIBRARIES cppzmq)
-set(LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR})
+set(LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
 set(THIRD_PARTY_INCLUDE_DIRS ${BOOST_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${cppzmq_INCLUDE_DIRS}
     ${FFMPEG_INCLUDE_DIRS} ${Spinnaker_INCLUDE_DIR} ${tclap_INCLUDE_DIR})
   message(STATUS "stream THIRD_PARTY_INCLUDE_DIRS: ${THIRD_PARTY_INCLUDE_DIRS}")
@@ -92,6 +119,37 @@ set(DECODE_RTP_SRCS
 add_executable(decode_rtp ${DECODE_RTP_SRCS})
 target_link_libraries(decode_rtp ${THIRD_PARTY_LIBRARIES})
 target_include_directories(decode_rtp PRIVATE ${LOCAL_INCLUDE_DIRS} ${THIRD_PARTY_INCLUDE_DIRS})
+
+if(WITH_QT_APP AND OSX)
+  message(STATUS "Building decode_rtp Qt based application")
+  set(DECODE_RTP_QT_APP_SRCS
+    ${COMMON_SRC}
+    ${CMAKE_CURRENT_LIST_DIR}/src/rtp_receiver.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/rtp_receiver.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/decode_rtp_qt_app.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/qt_app/window.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/qt_app/window.hpp
+  )
+
+  set(DECODE_RTP_QT_APP_THIRD_PARTY_LIBRARIES
+    ${THIRD_PARTY_LIBRARIES}
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Widgets
+  )
+
+  set(DECODE_RTP_QT_APP_THIRD_PARTY_INCLUDE_DIRS 
+    ${LOCAL_INCLUDE_DIRS}
+    ${Qt5Core_INCLUDE_DIRS}
+    ${THIRD_PARTY_INCLUDE_DIRS}
+  )
+
+  add_executable(decode_rtp_qt_app ${DECODE_RTP_QT_APP_SRCS})
+  set_property(TARGET decode_rtp_qt_app PROPERTY AUTOMOC ON)
+  set_property(TARGET decode_rtp_qt_app PROPERTY AUTOUIC ON)
+  target_link_libraries(decode_rtp_qt_app ${DECODE_RTP_QT_APP_THIRD_PARTY_LIBRARIES})
+  target_include_directories(decode_rtp_qt_app PRIVATE ${DECODE_RTP_QT_APP_THIRD_PARTY_INCLUDE_DIRS})
+endif()
 
 # # ##############################################################################
 # # Files
