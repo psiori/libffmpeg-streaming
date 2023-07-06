@@ -4,7 +4,7 @@ ImageUpdatingApp::ImageUpdatingApp(RTPReceiver& rtp_receiver,
                                    const QString& label,
                                    QWidget* parent) :
     QWidget(parent),
-    video_thread_(rtp_receiver, parent),
+    video_thread_(new VideoThread(rtp_receiver, parent)),
     display_width_(256),
     display_height_(256),
     num_images_(0),
@@ -26,14 +26,20 @@ ImageUpdatingApp::ImageUpdatingApp(RTPReceiver& rtp_receiver,
   setLayout(vbox_layout_);
 
   // Connect the VideoThread's signal to the updateImage slot
-  QObject::connect(&video_thread_, SIGNAL(changePixmap(const QImage&)), this,
+  QObject::connect(video_thread_, SIGNAL(changePixmap(const QImage&)), this,
                    SLOT(updateImage(const QImage&)));
+  video_thread_->start();
+}
 
-  video_thread_.start();
+ImageUpdatingApp::~ImageUpdatingApp() {
+  delete video_thread_;
+  delete image_label_;
+  delete text_label_;
+  delete vbox_layout_;
 }
 
 void ImageUpdatingApp::closeEvent(QCloseEvent* event) {
-  video_thread_.stop();
+  video_thread_->stop();
   event->accept();
 }
 

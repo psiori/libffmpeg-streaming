@@ -30,6 +30,7 @@ public:
                             const QString& label,
                             QWidget* parent = nullptr);
 
+  ~ImageUpdatingApp();
   /**
    * @brief Explicitly stop the VideoThread before closing to prevent errors.
    * @param event QCloseEvent.
@@ -63,8 +64,7 @@ private:
   /** thread responsible for emitting signal which fires every time an
    * image-loading is complete
    */
-  VideoThread video_thread_;
-//   RTPReceiver rtp_receiver_;
+  VideoThread* video_thread_;
 
   /** width of image-wdiget */
   int display_width_;
