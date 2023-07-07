@@ -1,15 +1,18 @@
 #include "image_updating_app.hpp"
 
-ImageUpdatingApp::ImageUpdatingApp(RTPReceiver& rtp_receiver,
+ImageUpdatingApp::ImageUpdatingApp(const std::string& sdp_path,
                                    const QString& label,
                                    QWidget* parent) :
     QWidget(parent),
-    video_thread_(new VideoThread(rtp_receiver, parent)),
+    
     display_width_(256),
     display_height_(256),
     num_images_(0),
     start_time_(QDateTime::currentMSecsSinceEpoch()) {
   setWindowTitle(label);
+
+  RTPReceiver* rtp_receiver = new RTPReceiver(sdp_path);
+  video_thread_ = new VideoThread(rtp_receiver, parent);
 
   image_label_ = new QLabel(this);
   image_label_->resize(display_width_, display_height_);

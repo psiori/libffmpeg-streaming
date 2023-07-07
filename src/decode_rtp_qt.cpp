@@ -14,11 +14,10 @@ int main(int argc, char* argv[]) {
   QVBoxLayout vbox(&window);
   QHBoxLayout hbox1;
 
-  RTPReceiver rtp_receiver1(argc > 1 ? argv[1] : "test.sdp");
+  const std::string sdp_path1(argc > 1 ? argv[1] : "test.sdp");
   std::unique_ptr<ImageUpdatingApp> player1(
-		new ImageUpdatingApp(rtp_receiver1, "Source1", &window)
-	);
-  
+      new ImageUpdatingApp(sdp_path1, "Source1", &window));
+
   hbox1.addWidget(player1.get());
   vbox.addLayout(&hbox1);
   window.setLayout(&vbox);

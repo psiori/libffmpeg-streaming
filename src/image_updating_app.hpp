@@ -26,7 +26,7 @@ public:
    * from a vector of Cv::Mat.
    * @param label of the corresponding image-widget
    * */
-  explicit ImageUpdatingApp(RTPReceiver& rtp_receiver,
+  explicit ImageUpdatingApp(const std::string& sdp_path,
                             const QString& label,
                             QWidget* parent = nullptr);
 

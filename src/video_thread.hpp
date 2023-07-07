@@ -15,7 +15,7 @@ public:
    * @brief Construct a new VideoThread instance.
    * @param image_iterator Image Iterator
    * */
-  explicit VideoThread(RTPReceiver& rtp_receiver,
+  explicit VideoThread(RTPReceiver* rtp_receiver,
                        QObject* parent = nullptr);
   void run() override;
   void stop();
@@ -33,5 +33,5 @@ private:
   /** var to start and stop thread */
   bool _runFlag = false;
   
-  RTPReceiver& rtp_receiver_;
+	RTPReceiver* rtp_receiver_;
 };
