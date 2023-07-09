@@ -1,3 +1,4 @@
+#include "qt_client_utils.hpp"
 #include "image_updating_app.hpp"
 
 ImageUpdatingApp::ImageUpdatingApp(const std::string& sdp_path,
@@ -11,8 +12,7 @@ ImageUpdatingApp::ImageUpdatingApp(const std::string& sdp_path,
     start_time_(QDateTime::currentMSecsSinceEpoch()) {
   setWindowTitle(label);
 
-  RTPReceiver* rtp_receiver = new RTPReceiver(sdp_path);
-  video_thread_ = new VideoThread(rtp_receiver, parent);
+  rtp_listener_qt_ = new RTPListenereQt(sdp_path, parent);
 
   image_label_ = new QLabel(this);
   image_label_->resize(display_width_, display_height_);
@@ -29,20 +29,20 @@ ImageUpdatingApp::ImageUpdatingApp(const std::string& sdp_path,
   setLayout(vbox_layout_);
 
   // Connect the VideoThread's signal to the updateImage slot
-  QObject::connect(video_thread_, SIGNAL(changePixmap(const QImage&)), this,
-                   SLOT(updateImage(const QImage&)));
-  video_thread_->start();
+  QObject::connect(rtp_listener_qt_, SIGNAL(imageReceived(const cv::Mat&)), this,
+                   SLOT(updateImage(const cv::Mat&)));
 }
 
 ImageUpdatingApp::~ImageUpdatingApp() {
-  delete video_thread_;
+  // delete video_thread_;
+  delete rtp_listener_qt_;
   delete image_label_;
   delete text_label_;
   delete vbox_layout_;
 }
 
 void ImageUpdatingApp::closeEvent(QCloseEvent* event) {
-  video_thread_->stop();
+  // video_thread_->stop();
   event->accept();
 }
 
@@ -52,7 +52,8 @@ void ImageUpdatingApp::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void ImageUpdatingApp::updateImage(const QImage& qImg) {
+void ImageUpdatingApp::updateImage(const cv::Mat& cvImage) {
+  const QImage qImg = qt_client_utils::cvMatToQImage(cvImage, display_width_, display_height_);
   image_label_->setPixmap(QPixmap::fromImage(qImg));
   updateTextLabel();
 }

@@ -124,13 +124,13 @@ if(WITH_QT_APP AND OSX)
   message(STATUS "Building decode_rtp Qt based application")
   set(DECODE_RTP_QT_SRCS
     ${COMMON_SRC}
-    ${CMAKE_CURRENT_LIST_DIR}/src/rtp_receiver.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/rtp_receiver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/decode_rtp_qt.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/image_updating_app.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/image_updating_app.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/video_thread.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/video_thread.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/rtp_listener_qt.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/rtp_listener_qt.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/qt_client_utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/qt_client_utils.hpp
   )
 
   set(DECODE_RTP_QT_THIRD_PARTY_LIBRARIES

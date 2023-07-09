@@ -13,7 +13,7 @@
 #include <QWidget>
 #include <opencv2/opencv.hpp>
 
-#include "video_thread.hpp"
+#include "rtp_listener_qt.hpp"
 
 
 class ImageUpdatingApp : public QWidget {
@@ -48,7 +48,8 @@ private slots:
    * @brief Paints image received from signal returning image loaded from disk.
    * @param qImg QImage.
    * */
-  void updateImage(const QImage& qImg);
+  // void updateImage(const QImage& qImg);
+  void updateImage(const cv::Mat& cvImage);
 
 private:
   /** label responsible for displaying image */
@@ -61,10 +62,7 @@ private:
    * (joystick controls for example) widgets */
   QVBoxLayout* vbox_layout_;
 
-  /** thread responsible for emitting signal which fires every time an
-   * image-loading is complete
-   */
-  VideoThread* video_thread_;
+  RTPListenereQt* rtp_listener_qt_;
 
   /** width of image-wdiget */
   int display_width_;

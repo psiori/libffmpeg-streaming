@@ -5,7 +5,6 @@
 #include <QWidget>
 
 #include "image_updating_app.hpp"
-#include "rtp_receiver.hpp"
 
 int main(int argc, char* argv[]) {
   QApplication app(argc, argv);
@@ -13,6 +12,8 @@ int main(int argc, char* argv[]) {
   QWidget window;
   QVBoxLayout vbox(&window);
   QHBoxLayout hbox1;
+
+  qRegisterMetaType<cv::Mat>("cv::Mat");
 
   const std::string sdp_path1(argc > 1 ? argv[1] : "test.sdp");
   std::unique_ptr<ImageUpdatingApp> player1(
