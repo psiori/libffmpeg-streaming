@@ -187,7 +187,7 @@ if (FFMPEG_INCLUDE_DIRS)
   list(REMOVE_DUPLICATES FFMPEG_INCLUDE_DIRS)
 endif ()
 
-set(libdeps "m;z;lzma;bz2;vpx")
+set(libdeps "m;z;lzma;bz2;vpx;x264")
 foreach(lib IN LISTS libdeps)
   # Note that there is no REQUIRED in the following block. That is on purpose.
   # CMake will automatically produce an error with a meaningful log message when

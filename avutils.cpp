@@ -1,12 +1,13 @@
-#include "avutils.hpp"
-
 #include <chrono>
+#include <iostream>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <thread>
 #include <vector>
+
+#include "avutils.hpp"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -44,7 +45,7 @@ void set_codec_params(AVCodecContext*& codec_ctx,
     codec_ctx->bit_rate = target_bitrate;
   }
   codec_ctx->thread_count = 1;
-  codec_ctx->codec_id     = AV_CODEC_ID_VP9;
+  codec_ctx->codec_id     = AV_CODEC_ID_H264;
   codec_ctx->codec_type   = AVMEDIA_TYPE_VIDEO;
   codec_ctx->width        = width;
   codec_ctx->height       = height;
@@ -59,36 +60,39 @@ int initialize_codec_stream(AVStream*& stream,
                             AVCodecContext*& codec_ctx,
                             AVCodec*& codec) {
   AVDictionary* codec_options = nullptr;
-  /* av_dict_set(&codec_options, "profile", "high", 0); */
-  /* av_dict_set(&codec_options, "preset", "ultrafast", 0); */
-  /* av_dict_set(&codec_options, "tune", "zerolatency", 0); */
-  /* av_dict_set_int(&codec_options, "aud", 1, 0); */
-  av_dict_set(&codec_options, "deadline", "realtime", 0);
-  av_dict_set(&codec_options, "quality", "realtime", 0);
-  av_dict_set_int(&codec_options, "speed", 8, 0);
-  av_dict_set_int(&codec_options, "row-mt", 1, 0);
-  av_dict_set_int(&codec_options, "lag-in-frames", 0, 0);
-  av_dict_set_int(&codec_options, "tile-columns", 5, 0);
-  av_dict_set_int(&codec_options, "frame-parallel", 0, 0);
+  av_dict_set(&codec_options, "profile", "high", 0);
+  av_dict_set(&codec_options, "preset", "ultrafast", 0);
+  av_dict_set(&codec_options, "tune", "zerolatency", 0);
+  av_dict_set_int(&codec_options, "aud", 1, 0);
+  /* av_dict_set(&codec_options, "deadline", "realtime", 0); */
+  /* av_dict_set(&codec_options, "quality", "realtime", 0); */
+  /* av_dict_set_int(&codec_options, "speed", 8, 0); */
+  /* av_dict_set_int(&codec_options, "row-mt", 1, 0); */
+  /* av_dict_set_int(&codec_options, "lag-in-frames", 0, 0); */
+  /* av_dict_set_int(&codec_options, "tile-columns", 5, 0); */
+  /* av_dict_set_int(&codec_options, "frame-parallel", 0, 0); */
 
   // open video encoder
   int ret = avcodec_open2(codec_ctx, codec, &codec_options);
+  if (ret != 0) {
+    throw std::runtime_error("Could not open codec: " + av_strerror2(ret));
+  }
 
   if (codec_ctx->extradata_size > 0) {
-    /* std::cout << "Extradata present in AVCodecContext" << std::endl; */
+    std::cout << "Extradata present in AVCodecContext" << std::endl;
   } else {
-    /* std::cout << "No Extradata present in AVFormatContext" << std::endl; */
+    std::cout << "No Extradata present in AVFormatContext" << std::endl;
   }
 
   bool all_found       = true;
   AVDictionaryEntry* e = nullptr;
   while ((e = av_dict_get(codec_options, "", e, AV_DICT_IGNORE_SUFFIX))) {
-    /* std::cout << "Did not find option " << e->key << ": " << e->value */
-    /*           << std::endl; */
+    std::cout << "Did not find option " << e->key << ": " << e->value
+              << std::endl;
     all_found = false;
   }
   if (all_found) {
-    /* std::cout << "All codec options found." << std::endl; */
+    std::cout << "All codec options found." << std::endl;
   }
 
   ret = avcodec_parameters_from_context(stream->codecpar, codec_ctx);
@@ -128,14 +132,14 @@ int write_frame(AVCodecContext* codec_ctx,
 
   int ret = avcodec_send_frame(codec_ctx, frame);
   if (ret < 0) {
-    /* std::cout << "Error sending frame to codec context!" << std::endl; */
+    std::cout << "Error sending frame to codec context: " << av_strerror2(ret)
+              << std::endl;
     return ret;
   }
 
   ret = avcodec_receive_packet(codec_ctx, &pkt);
   if (ret < 0) {
-    /* std::cout << "Error receiving packet from codec context!" << std::endl;
-     */
+    std::cout << "Error receiving packet from codec context!" << std::endl;
     return ret;
   }
 
