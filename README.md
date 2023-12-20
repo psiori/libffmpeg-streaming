@@ -7,11 +7,11 @@ I have since enabled RTP transport, so the stream can be played with ffplay and 
 (with h264 only).
 
 ## Building
-If you have autocrane-deps installed you most likely have all dependencies already. 
+If you have autocrane-deps installed you most likely have all dependencies already.
 To use the deps from autocrane folder run cmake like:
 ```bash
 mkdir build && cd build
-cmake .. -DCMAKE_PREFIX_PATH="PATH/TO/autocrane-core/deps/" 
+cmake .. -DCMAKE_PREFIX_PATH="PATH/TO/autocrane-core/deps/"
 ```
 
 ## Binaries
@@ -29,7 +29,7 @@ Beware that **an even-numbered RTP port** is necessary otherwise VLC will not re
 packets. This is because the live555 library VLC used discards the last bit of the port
 number, so the port gets changed when odd (wtf).
 
-`encode_from_zmq` receives images via zmq and sends it to an rtp host and port. Check [below](#Encode-From-ZMQ) for details. 
+`encode_from_zmq` receives images via zmq and sends it to an rtp host and port. Check [below](#Encode-From-ZMQ) for details.
 
 # Streaming to VLC
 
@@ -121,27 +121,40 @@ unintentional buffering and delays.
 
 # Encode From ZMQ
 
+To build this binary, you  must pass `-DBUILD_zmq_encoder=ON` to cmake, and have zeromq,
+cppzmq, Poco and LibDataChannel installed. Refer to other repos (`psiori-streaming`) for
+how to install them.
+
+This tool is intended to receive images from somewhere via ZMQ and connect to
+`psiori-streaming` mediaserver to publish this data as a video stream.
+
 Example usage is
 
 ```
-./build/encode_from_zmq --host 192.168.101.10 --port 6001 --receiver 192.168.19.202 --stream-port 8000
+./encode_from_zmq --zmq-port 6004 --zmq-host 127.0.0.1 --zmq-user operator --zmq-password psiori --topic testsrc
 ```
 
 ```
+
 USAGE:
 
-   ./encode_from_zmq  [--bgr] [-b <Bitrate as Integer>] [-f <fps as
-                      Integer>] [--stream-port <Port as Integer>] [-R
-                      <Receiver as String>] [-t <topic as string>] [-p
-                      <password as string>] [-u <user as string>] [--port
-                      <Port as Integer>] [-H <Host as String>] [--]
-                      [--version] [-h]
+   ./third_party/libffmpeg-zmq-streaming/bin/encode_from_zmq  [--bgr] [-b
+                                        <Bitrate as Integer>] [-f <fps as
+                                        Integer>] [--stream-port <Port>]
+                                        [-m <Ip address>] -t <topic as
+                                        string> --mediaserver-password
+                                        <password as string>
+                                        [--zmq-password <password as
+                                        string>] -u <user as string>
+                                        --zmq-port <Port as Integer> [-H
+                                        <Host as String>] [--] [--version]
+                                        [-h]
 
 
 Where:
 
    --bgr
-     switch color channels before sending
+     switch channels before sending
 
    -b <Bitrate as Integer>,  --bitrate <Bitrate as Integer>
      bitrate of stream
@@ -149,25 +162,28 @@ Where:
    -f <fps as Integer>,  --fps <fps as Integer>
      fps of stream
 
-   --stream-port <Port as Integer>
-     port of stream
+   --stream-port <Port>
+     WebSocket port on the mediaserver for setup
 
-   -R <Receiver as String>,  --receiver <Receiver as String>
-     receiver of the rtp stream
+   -m <Ip address>,  --mediaserver <Ip address>
+     mediaserver IP
 
    -t <topic as string>,  --topic <topic as string>
-     topic to filter zmq messages
+     (required)  topic of the stream
 
-   -p <password as string>,  --password <password as string>
-     password to authenticate at zmq
+   --mediaserver-password <password as string>
+     (required)  password for mediaserver authentication
 
-   -u <user as string>,  --user <user as string>
-     user to authenticate at zmq
+   --zmq-password <password as string>
+     password for zmq authentication
 
-   --port <Port as Integer>
-     port of incoming zmq messages
+   -u <user as string>,  --zmq-user <user as string>
+     (required)  user for zmq authentication
 
-   -H <Host as String>,  --host <Host as String>
+   --zmq-port <Port as Integer>
+     (required)  port of incoming zmq messages
+
+   -H <Host as String>,  --zmq-host <Host as String>
      host of incoming zmq messages
 
    --,  --ignore_rest
@@ -180,5 +196,6 @@ Where:
      Displays usage information and exits.
 
 
-   Receive zmq (from KAI-core), send via RTP
+   Recieve zmq (from KAI-core), send via RTP
+
 ```
