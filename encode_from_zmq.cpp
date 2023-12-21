@@ -371,7 +371,7 @@ void VideoStreamMonitor::process(cv::Mat data) {
 }
 
 int main(int argc, char* argv[]) {
-  CmdLine cmdline("Recieve zmq (from KAI-core), send via RTP");
+  CmdLine cmdline("Recieve zmq (from KAI-core), send via webrtc");
 
   ValueArg<string> zmq_host("H", "zmq-host", "host of incoming zmq messages",
                             false, "127.0.0.1", "Host as String", cmdline);
@@ -381,7 +381,7 @@ int main(int argc, char* argv[]) {
   ValueArg<string> zmq_user("u", "zmq-user", "user for zmq authentication",
                             true, "", "user as string", cmdline);
   ValueArg<string> zmq_pw("", "zmq-password", "password for zmq authentication",
-                          false, "psiori", "password as string", cmdline);
+                          true, "", "password as string", cmdline);
   ValueArg<string> mediaserver_pw("", "mediaserver-password",
                                   "password for mediaserver authentication",
                                   true, "", "password as string", cmdline);
@@ -405,7 +405,7 @@ int main(int argc, char* argv[]) {
 
 
   connect_socket(socket, zmq_host.getValue(), zmq_port.getValue(),
-                 zmq_user.getValue(), zmq_pw.getValue(), "");
+                 zmq_user.getValue(), zmq_pw.getValue(), topic.getValue());
 
   const int rtp_port = get_free_port();
 
