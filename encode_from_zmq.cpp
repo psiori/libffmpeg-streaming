@@ -139,7 +139,8 @@ public:
       if (message.find("status") != message.end() &&
           message["status"].get<std::string>() != "ok") {
         std::cout << *this << "Got error status "
-                  << message["status"].get<std::string>() << std::endl;
+                  << message["status"].get<std::string>() << " with info "
+                  << message["description"].get<std::string>() << std::endl;
         return;
       }
 
@@ -332,7 +333,9 @@ VideoStreamMonitor::VideoStreamMonitor(const string& host,
                                        unsigned int port,
                                        unsigned int fps,
                                        unsigned int bitrate) :
-    transmitter(host, port, fps, 1, bitrate), queue(1), has_printed_sdp(false) {
+    transmitter(host, port, fps, 10, bitrate, 1400 /*pkt size*/),
+    queue(1),
+    has_printed_sdp(false) {
   stop.store(false);
   av_log_set_level(AV_LOG_QUIET);
   encoder = std::thread([&]() {
@@ -466,10 +469,10 @@ void connect_socket(zmq::socket_t& socket,
                     const string& user,
                     const string& pw,
                     const string& topic) {
-  socket.set(zmq::sockopt::plain_username, user);
-  socket.set(zmq::sockopt::plain_password, pw);
+  /* socket.set(zmq::sockopt::plain_username, user); */
+  /* socket.set(zmq::sockopt::plain_password, pw); */
   socket.set(zmq::sockopt::rcvhwm, 2);
-  socket.set(zmq::sockopt::subscribe, topic);
+  socket.set(zmq::sockopt::subscribe, "");
   const auto connect_str = string("tcp://") + host + ":" + std::to_string(port);
   socket.connect(connect_str);
   std::cout << "Connected zmq socket to " << connect_str
