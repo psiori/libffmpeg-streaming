@@ -42,7 +42,6 @@ int get_free_port();
 
 struct WebRTCBridgeConfig {
   string topic;
-  int udp_port;
   string udp_hostname;
   string mediaserver_host;
   int mediaserver_port;
@@ -80,21 +79,27 @@ class WebRTCBridge {
 
   const string hostname_;  // hostname to bind to for receiving rtp packets
 
-  int udp_listen_port_;  // port to expect udp rtp on
+  SOCKET rtp_socket_;
+  int udp_listen_port_;
 
   string topic_;
   std::shared_ptr<rtc::WebSocket> ws_;
   string mediaserver_host_;
   int mediaserver_port_;
   PortRange port_range_;
+  SOCKET sock_;
 
 public:
+  int get_bound_port() {
+    return udp_listen_port_;
+  }
+
   ~WebRTCBridge() {
     std::cout << *this << "destroying" << std::endl;
+    close(sock_);
   }
   friend ostream& operator<<(ostream& os, const WebRTCBridge& s) {
-    os << "WebRTCBridge on topic " << s.topic_ << " with rtp udp port "
-       << s.udp_listen_port_ << ": ";
+    os << "WebRTCBridge on topic " << s.topic_ << ": ";
     return os;
   }
 
@@ -107,11 +112,38 @@ public:
 
   WebRTCBridge(const WebRTCBridgeConfig& sender_cfg) :
       hostname_(sender_cfg.udp_hostname),
-      udp_listen_port_(sender_cfg.udp_port),
       topic_(sender_cfg.topic),
       mediaserver_host_(sender_cfg.mediaserver_host),
       mediaserver_port_(sender_cfg.mediaserver_port),
       port_range_(PortRange(sender_cfg.begin_port, sender_cfg.end_port)) {
+    sock_ = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock_ == -1) {
+      throw std::runtime_error("Could not create socket");
+    }
+
+    struct sockaddr_in addr {};
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port   = htons(0);
+    if (1 != inet_pton(AF_INET, this->hostname_.c_str(), &addr.sin_addr)) {
+      throw std::runtime_error("Failed to set up socket address.");
+    } else {
+    }
+    if (0 != ::bind(sock_, (struct sockaddr*)&addr, sizeof(addr))) {
+      throw std::runtime_error("Failed to bind internal UDP socket on " +
+                               this->hostname_);
+    } else {
+      struct sockaddr_in actual_addr {};
+      socklen_t len = sizeof(actual_addr);
+      if (0 != getsockname(sock_, (struct sockaddr*)&actual_addr, &len)) {
+        throw std::runtime_error("Could not determine bound port");
+      }
+      this->udp_listen_port_ = ntohs(actual_addr.sin_port);
+      std::cout << *this << "Bound internal socket to port "
+                << this->udp_listen_port_ << std::endl;
+    }
+
+
     const auto jwt_token =
         auth::get_signed_serialized_token(sender_cfg.pw, sender_cfg.topic);
     ws_ = std::make_shared<rtc::WebSocket>();
@@ -181,6 +213,7 @@ public:
         }
       });
 
+
       pc_->onTrack([this](shared_ptr<rtc::Track> track) {
         std::cout << *this << "onTrack()" << std::endl;
         rtc::Description::Media media = track->description();
@@ -198,64 +231,16 @@ public:
         this->video_track_->onOpen([this]() {
           std::cout << *this << "track now open!" << std::endl;
 
-          SOCKET sock;
-          int err;
-          struct addrinfo hints = {}, *addrs;
-          char port_str[16]     = {};
-
-          hints.ai_family   = AF_INET;
-          hints.ai_socktype = SOCK_DGRAM;
-          hints.ai_protocol = 0;
-
-          sprintf(port_str, "%d", udp_listen_port_);
-
-          err = getaddrinfo(this->hostname_.c_str(), port_str, &hints, &addrs);
-          if (err != 0) {
-            std::cout << *this << "Could not resolve " << hostname_ << ": "
-                      << gai_strerror(err) << std::endl;
-            throw std::runtime_error("Unable to resolve " + hostname_);
-          }
-
-          for (struct addrinfo* addr = addrs; addr != NULL;
-               addr                  = addr->ai_next) {
-            sock =
-                socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-            if (sock == -1) {
-              err = errno;
-              break;
-            }
-
-            std::cout << *this << "Binding to " << this->hostname_ << ":"
-                      << udp_listen_port_ << std::endl;
-
-            if (::bind(sock, addr->ai_addr, addr->ai_addrlen) == 0) {
-              break;  // BOUND, leave loop
-            }
-
-            err = errno;
-
-            close(sock);
-            sock = -1;
-          }
-
-          freeaddrinfo(addrs);
-
-          if (sock == -1) {
-            throw std::runtime_error("Failed to bind UDP socket on " +
-                                     this->hostname_ + ":" +
-                                     to_string(udp_listen_port_));
-            abort();
-          }
 
           constexpr int rcvBufSize = 212992;
-          setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
+          setsockopt(this->sock_, SOL_SOCKET, SO_RCVBUF,
                      reinterpret_cast<const char*>(&rcvBufSize),
                      sizeof(rcvBufSize));
 
           constexpr int BUFFER_SIZE = 2048;
           char buffer[BUFFER_SIZE];
           int len;
-          while ((len = recv(sock, buffer, BUFFER_SIZE, 0)) >= 0) {
+          while ((len = recv(this->sock_, buffer, BUFFER_SIZE, 0)) >= 0) {
             if (len < sizeof(rtc::RtpHeader) || !this->video_track_->isOpen()) {
               std::cout
                   << *this
@@ -333,11 +318,13 @@ VideoStreamMonitor::VideoStreamMonitor(const string& host,
                                        unsigned int port,
                                        unsigned int fps,
                                        unsigned int bitrate) :
-    transmitter(host, port, fps, 10, bitrate, 1400 /*pkt size*/),
+    transmitter(host, port, fps, 1, bitrate, 1400 /*pkt size*/),
     queue(1),
     has_printed_sdp(false) {
   stop.store(false);
-  av_log_set_level(AV_LOG_QUIET);
+  std::cout << "Creating VideoStreamMonitor with dst port " << port
+            << std::endl;
+  /* av_log_set_level(AV_LOG_QUIET); */
   encoder = std::thread([&]() {
     while (!stop.load()) {
       // const auto queue_status = queue.try_pull_front(image);
@@ -410,10 +397,7 @@ int main(int argc, char* argv[]) {
   connect_socket(socket, zmq_host.getValue(), zmq_port.getValue(),
                  zmq_user.getValue(), zmq_pw.getValue(), topic.getValue());
 
-  const int rtp_port = get_free_port();
-
   WebRTCBridgeConfig cfg{.topic            = topic.getValue(),
-                         .udp_port         = rtp_port,
                          .udp_hostname     = "127.0.0.1",
                          .mediaserver_host = mediaserver_host.getValue(),
                          .mediaserver_port = mediaserver_ws_port.getValue(),
@@ -424,8 +408,8 @@ int main(int argc, char* argv[]) {
   WebRTCBridge rtp2webrtc_bridge(cfg);
 
 
-  VideoStreamMonitor streamer(
-      "127.0.0.1", rtp_port, rtp_fps.getValue(), rtp_bitrate.getValue());
+  VideoStreamMonitor streamer("127.0.0.1", rtp2webrtc_bridge.get_bound_port(),
+                              rtp_fps.getValue(), rtp_bitrate.getValue());
 
   zmq::message_t recv_topic;
   zmq::message_t request;
