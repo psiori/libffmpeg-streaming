@@ -38,7 +38,6 @@ void connect_socket(zmq::socket_t& socket,
                     const string& user,
                     const string& pw,
                     const string& topic);
-int get_free_port();
 
 struct WebRTCBridgeConfig {
   string topic;
@@ -456,16 +455,12 @@ void connect_socket(zmq::socket_t& socket,
                     const string& user,
                     const string& pw,
                     const string& topic) {
-  /* socket.set(zmq::sockopt::plain_username, user); */
-  /* socket.set(zmq::sockopt::plain_password, pw); */
+  socket.set(zmq::sockopt::plain_username, user);
+  socket.set(zmq::sockopt::plain_password, pw);
   socket.set(zmq::sockopt::rcvhwm, 2);
   socket.set(zmq::sockopt::subscribe, "");
   const auto connect_str = string("tcp://") + host + ":" + std::to_string(port);
   socket.connect(connect_str);
   std::cout << "Connected zmq socket to " << connect_str
             << ", on topic: " << topic << std::endl;
-}
-
-int get_free_port() {
-  return 6000;
 }
