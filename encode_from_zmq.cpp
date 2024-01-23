@@ -307,7 +307,8 @@ public:
   VideoStreamMonitor(const string& host,
                      unsigned int port,
                      unsigned int fps,
-                     unsigned int bitrate);
+                     unsigned int bitrate,
+                     unsigned int keyframe_interval);
 
   ~VideoStreamMonitor();
 
@@ -317,8 +318,9 @@ public:
 VideoStreamMonitor::VideoStreamMonitor(const string& host,
                                        unsigned int port,
                                        unsigned int fps,
-                                       unsigned int bitrate) :
-    transmitter(host, port, fps, 1, bitrate, 1400 /*pkt size*/),
+                                       unsigned int bitrate,
+                                       unsigned int keyframe_interval) :
+    transmitter(host, port, fps, keyframe_interval, bitrate, 1400 /*pkt size*/),
     queue(1),
     has_printed_sdp(false) {
   stop.store(false);
@@ -409,7 +411,8 @@ int main(int argc, char* argv[]) {
 
 
   VideoStreamMonitor streamer("127.0.0.1", rtp2webrtc_bridge.get_bound_port(),
-                              rtp_fps.getValue(), rtp_bitrate.getValue());
+                              rtp_fps.getValue(), rtp_bitrate.getValue(),
+                              rtp_fps.getValue() * 2);
 
   zmq::message_t recv_topic;
   zmq::message_t request;
