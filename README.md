@@ -35,3 +35,22 @@ Example usage is
 with the ZMQ params matching autocrane config.
 
 Pass the `--help` argument for more info.
+
+## Sending dummy data without autocrane
+When running the `encode_from_zmq` binary, it will print the UDP port it uses
+internally, for the stream (zmq images converted to RTP). Since this is just a random
+free udp port, you can send any rtp data to it, as long as no autocrane is running to
+interfere.
+
+Look for the output
+
+```
+WebRTCBridge on topic cam_cabin: Bound internal socket to port 46374
+```
+
+and use that port to send data to. You can use ffmpeg to generate test data of any kind,
+with the right codec, eg.
+
+```
+/home/autocrane/deps/bin/ffmpeg -re -f lavfi -i "testsrc,fps=24" -vcodec libvpx-vp9 -pix_fmt yuv420p -b:v 2M  -g 10 -deadline realtime -cpu-used 8 -strict experimental -f rtp "rtp://127.0.0.1:46374"
+```
