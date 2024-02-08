@@ -52,5 +52,5 @@ and use that port to send data to. You can use ffmpeg to generate test data of a
 with the right codec, eg.
 
 ```
-/home/autocrane/deps/bin/ffmpeg -re -f lavfi -i "testsrc,fps=24" -vcodec libvpx-vp9 -pix_fmt yuv420p -b:v 2M  -g 10 -deadline realtime -cpu-used 8 -strict experimental -f rtp "rtp://127.0.0.1:46374"
+/home/autocrane/deps/bin/ffmpeg -re -f lavfi -i "testsrc,fps=24" -vcodec libvpx-vp9 -pix_fmt yuv420p -b:v 2M  -g 10 -deadline realtime -cpu-used 8 -strict experimental -f rtp "rtp://127.0.0.1:46374?pkt_size=1401"
 ```
